@@ -4,11 +4,15 @@ The execution firewall for autonomous finance.
 
 ## Current delivery state
 
-Backend and wallet-adapter source only. The approved visual references have not been supplied; the landing and all six product pages are intentionally pending. This is not a deployed release.
+The landing, Execution Terminal, Agent Registry, Policy Engine, Audit Trail, and Documentation are implemented. `/simulator` routes to the real intent evaluator in `/terminal`. All authenticated product screens use the existing server APIs; no browser-local persistence or artificial blockchain confirmations are introduced.
+
+The supplied reference path `design-reference/sentri-approved.png` does not currently contain a file. The frontend follows the written black/orange/cyan/purple/green editorial direction, but fidelity to the locked image cannot be verified until the PNG is available. This is not a verified production deployment.
 
 Implemented: wallet-signature authentication, wallet-scoped agent registry and permissions, policy updates with optimistic concurrency, token metadata validation through Robinhood Chain RPC, deterministic policy decisions, and persistent evaluation records with exact policy snapshots.
 
-The browser adapter supports injected EIP-1193 wallets, network switching, native balance retrieval, sign-in, and account/network change listeners. It is not yet connected to a user interface. Automated adapter tests use provider doubles; no live browser wallet has been verified.
+The browser adapter is connected to the interface with EIP-6963 provider discovery and an injected-wallet fallback, network switching, native balance retrieval, signed login, and account/network change handling. Automated tests cover provider behavior and real ephemeral EOA signatures; a live MetaMask account has not been verified in the available in-app browser, which has no installed wallet.
+
+The responsive motion system includes hero text entrance, independently floating geometric symbols, pointer parallax, scroll reveals, interactive labels and buttons, evaluation status transitions, and route entrances. Reduced-motion preferences disable nonessential motion, and the hero renders without network assets.
 
 ## Run
 
@@ -40,7 +44,28 @@ Copy `.env.example` to `.env.local` for local configuration. Production requires
 
 Production requests fail closed with HTTP 503 when Redis is absent. Redis credentials stay server-side. Configure database access, backups, retention, and monitoring before use. The Redis adapter has not been exercised against a provisioned service in this workspace.
 
-Vercel project preset: Next.js. Build: `npm run build`. No custom output directory. No GitHub remote, Vercel project, production Redis credentials, or deployed URL has been supplied.
+Vercel project preset: Next.js. `vercel.json` configures `npm ci` and `npm run build`. No custom output directory. No GitHub remote or project link is present. Use the project name `sentri` when linking. Production Redis credentials remain unavailable.
+
+After configuring production environment variables, verify them in an environment that has those variables loaded:
+
+```sh
+node scripts/check-production.mjs
+```
+
+This verifies the HTTPS origin, isolated Redis read/write and atomic operations, and RPC chain ID. It never prints credentials or modifies wallet records. Its temporary Redis key expires after 30 seconds.
+
+Complete Vercel authentication and deployment from this project directory:
+
+```sh
+npx --yes vercel@65.11.0 --global-config ../../work/vercel-config login
+npx --yes vercel@65.11.0 --global-config ../../work/vercel-config link --yes --project sentri
+npx --yes vercel@65.11.0 --global-config ../../work/vercel-config env add REDIS_REST_URL production
+npx --yes vercel@65.11.0 --global-config ../../work/vercel-config env add REDIS_REST_TOKEN production
+npx --yes vercel@65.11.0 --global-config ../../work/vercel-config env add APP_ORIGIN production
+npx --yes vercel@65.11.0 --global-config ../../work/vercel-config deploy --prod --yes
+```
+
+Enter credentials through the CLI prompts or Vercel's environment-variable settings, never shell arguments or chat. Set APP_ORIGIN to the deployment's exact canonical HTTPS origin. If Node reports a certificate-chain error on this workstation, enable the system certificate store for the CLI process with `NODE_OPTIONS=--use-system-ca`; do not disable TLS verification. The checkout-local CLI configuration above is outside the Git repository and contains authentication state, so keep it private.
 
 ## API
 
@@ -65,7 +90,7 @@ Workspace actions:
 
 Amounts are decimal strings in the selected token's units. The same numeric policy limit applies independently to each approved token; this is not a USD valuation, aggregate budget, or daily cap. Slippage uses integer basis points. Maximum limits are inclusive. Unknown tokens and inactive, missing, foreign, or unauthorized agents are rejected. New wallets start with authorization paused and an empty destination list.
 
-Every evaluation records its ID, time, wallet, network, agent ID/name, policy version and snapshot, normalized intent, and rule explanations. These are application records, not an immutable onchain log. Limits: 50 agents, 20 approved tokens, 50 destinations, 2,000 evaluations per wallet. The evaluation limit prevents further evaluations without deleting prior records. Export/archival UI remains pending.
+Every evaluation records its ID, time, wallet, network, agent ID/name, policy version and snapshot, normalized intent, and rule explanations. These are application records, not an immutable onchain log. Limits: 50 agents, 20 approved tokens, 50 destinations, 2,000 evaluations per wallet. The evaluation limit prevents further evaluations without deleting prior records. JSON export is available; server-side archival remains unsupported.
 
 ## Security and execution boundaries
 

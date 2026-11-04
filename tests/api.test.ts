@@ -50,6 +50,30 @@ test('authenticated workspace HTTP integration', { timeout: 120000 }, async t =>
     assert.match(cookie, /SameSite=strict/i);
     return { cookie: cookie.split(';')[0], nonce, signature };
   }
+  await t.test('all required frontend routes render and expose honest public copy', async () => {
+    for (const route of ['/', '/terminal', '/agents', '/policies', '/activity', '/docs']) {
+      const response = await fetch(origin + route);
+      assert.equal(response.status, 200, route);
+      const html = await response.text();
+      assert.match(html, /SENTRI/);
+      assert.match(html, /<main[^>]*id="main"/);
+      // Inspect rendered text, excluding framework scripts and style payloads.
+      const text = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' ');
+      assert.doesNotMatch(text, /\b(demo|MVP|testnet|prototype)\b/i, route);
+      assert.doesNotMatch(html, /(?:REDIS_REST_TOKEN|VERCEL_TOKEN)=/);
+    }
+  });
+  await t.test('simulator entry routes to the real intent evaluator', async () => {
+    const response = await fetch(origin + '/simulator', { redirect: 'manual' });
+    assert.equal(response.status, 307);
+    assert.equal(response.headers.get('location'), '/terminal');
+  });
+  await t.test('production security protections remain present on frontend responses', async () => {
+    const response = await fetch(origin + '/');
+    assert.equal(response.headers.get('x-frame-options'), 'DENY');
+    assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
+    assert.match(response.headers.get('content-security-policy')!, /frame-ancestors 'none'/);
+  });
   let sessionA: Awaited<ReturnType<typeof login>>;
   let sessionB: Awaited<ReturnType<typeof login>>;
   let state: Workspace;
