@@ -6,7 +6,7 @@ The execution firewall for autonomous finance.
 
 The landing, Execution Terminal, Agent Registry, Policy Engine, Audit Trail, and Documentation are implemented. `/simulator` routes to the real intent evaluator in `/terminal`. All authenticated product screens use the existing server APIs; no browser-local persistence or artificial blockchain confirmations are introduced.
 
-The supplied reference path `design-reference/sentri-approved.png` does not currently contain a file. The frontend follows the written black/orange/cyan/purple/green editorial direction, but fidelity to the locked image cannot be verified until the PNG is available. This is not a verified production deployment.
+The supplied reference path `design-reference/sentri-approved.png` does not currently contain a file. The frontend follows the written black/orange/cyan/purple/green editorial direction; comparison with the locked image is a separate outstanding check and does not block deployment.
 
 Implemented: wallet-signature authentication, wallet-scoped agent registry and permissions, policy updates with optimistic concurrency, token metadata validation through Robinhood Chain RPC, deterministic policy decisions, and persistent evaluation records with exact policy snapshots.
 
@@ -38,13 +38,15 @@ Tests compile with TypeScript and use Node's test runner. HTTP tests start an is
 Copy `.env.example` to `.env.local` for local configuration. Production requires:
 
 - `APP_ORIGIN`: exact HTTPS origin of the Vercel deployment.
-- `REDIS_REST_URL` and `REDIS_REST_TOKEN`: an Upstash-compatible Redis REST endpoint supporting GET, GETDEL, SET, and EVAL.
+- `REDIS_REST_URL` and `REDIS_REST_TOKEN`, or Vercel-managed `KV_REST_API_URL` and `KV_REST_API_TOKEN`: an Upstash-compatible Redis REST endpoint supporting GET, GETDEL, SET, and EVAL. A complete pair is required; credentials from different pairs are never mixed.
 - `ROBINHOOD_RPC_URL`: server RPC endpoint; may contain a private provider credential.
 - `NEXT_PUBLIC_ROBINHOOD_RPC_URL`: public RPC URL for wallet network configuration; never use a credential here.
 
-Production requests fail closed with HTTP 503 when Redis is absent. Redis credentials stay server-side. Configure database access, backups, retention, and monitoring before use. The Redis adapter has not been exercised against a provisioned service in this workspace.
+Production requests fail closed with HTTP 503 when Redis is absent. Redis credentials stay server-side. SENTRI uses the `sentri:v1:` Redis key prefix, including for wallet data, sessions, challenges, and rate limits, to isolate its records from other applications using the resource.
 
-Vercel project preset: Next.js. `vercel.json` configures `npm ci` and `npm run build`. No custom output directory. No GitHub remote or project link is present. Use the project name `sentri` when linking. Production Redis credentials remain unavailable.
+Vercel project: `sentri`, linked to this checkout. Assigned production origin: `https://sentri-tau.vercel.app`. `vercel.json` configures `npm ci` and `npm run build`; the project uses Node.js 24.x to match local validation. No custom output directory or GitHub remote is configured.
+
+The existing Upstash resource `equity-void-auth` is connected to SENTRI's production environment using provider-managed `KV_REST_API_URL` and `KV_REST_API_TOKEN`. The production origin and public Robinhood RPC settings are configured in Vercel. No credentials are committed. Deployment readiness and live behavior must be confirmed by Vercel status and production smoke tests, rather than inferred from these settings.
 
 After configuring production environment variables, verify them in an environment that has those variables loaded:
 

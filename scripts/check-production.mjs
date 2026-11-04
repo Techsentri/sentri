@@ -1,19 +1,22 @@
 // Verifies configuration without printing secrets or touching wallet records.
 import { randomUUID } from 'node:crypto';
 
-const required = ['APP_ORIGIN', 'REDIS_REST_URL', 'REDIS_REST_TOKEN'];
+const url = process.env.REDIS_REST_URL && process.env.REDIS_REST_TOKEN ? process.env.REDIS_REST_URL : process.env.KV_REST_API_URL;
+const token = process.env.REDIS_REST_URL && process.env.REDIS_REST_TOKEN ? process.env.REDIS_REST_TOKEN : process.env.KV_REST_API_TOKEN;
+const required = ['APP_ORIGIN'];
 const missing = required.filter(key => !process.env[key]);
+if (!url || !token) missing.push('REDIS_REST_URL + REDIS_REST_TOKEN (or KV_REST_API_URL + KV_REST_API_TOKEN)');
 if (missing.length) {
   console.error(`Production configuration is incomplete: ${missing.join(', ')}.`);
   process.exit(1);
 }
 try {
   const origin = new URL(process.env.APP_ORIGIN);
-  const redisUrl = new URL(process.env.REDIS_REST_URL);
+  const redisUrl = new URL(url);
   if (origin.protocol !== 'https:' || origin.origin !== process.env.APP_ORIGIN) throw new Error('APP_ORIGIN must be an exact HTTPS origin with no path or trailing slash.');
   if (redisUrl.protocol !== 'https:') throw new Error('REDIS_REST_URL must use HTTPS.');
   const command = async args => {
-    const response = await fetch(redisUrl, { method: 'POST', headers: { Authorization: `Bearer ${process.env.REDIS_REST_TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify(args), signal: AbortSignal.timeout(10000) });
+    const response = await fetch(redisUrl, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(args), signal: AbortSignal.timeout(10000) });
     if (!response.ok) throw new Error('Redis REST connection failed. Check its URL and access token.');
     const data = await response.json();
     if (data.error) throw new Error('Redis command failed. Confirm SET, GET, GETDEL, and EVAL are permitted.');
