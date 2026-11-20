@@ -3,10 +3,25 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { ArrowUpRight, ArrowRight, X, Menu, Wallet, Check, LoaderCircle, Shield } from 'lucide-react';
 import { shortAddress, useSentri } from './provider';
 
 const links = [['/terminal', 'Terminal'], ['/agents', 'Agents'], ['/policies', 'Policies'], ['/activity', 'Activity'], ['/docs', 'Docs']] as const;
+function HeaderSocialLinks() {
+  const reduced = useReducedMotion();
+  const interaction = { whileHover: reduced ? undefined : { y: -2 }, transition: { duration: 0.18 } };
+  return <div className="header-social-links" role="group" aria-label="SENTRI social links">
+    <motion.a {...interaction} className="header-social-link" href="https://github.com/Techsentri" aria-label="SENTRI on GitHub (opens in a new tab)" target="_blank" rel="noopener noreferrer">
+      {/* Official GitHub mark: Primer Octicons mark-github-24. */}
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true" focusable="false"><path d="M10.226 17.284c-2.965-.36-5.054-2.493-5.054-5.256 0-1.123.404-2.336 1.078-3.144-.292-.741-.247-2.314.09-2.965.898-.112 2.111.36 2.83 1.01.853-.269 1.752-.404 2.853-.404 1.1 0 1.999.135 2.807.382.696-.629 1.932-1.1 2.83-.988.315.606.36 2.179.067 2.942.72.854 1.101 2 1.101 3.167 0 2.763-2.089 4.852-5.098 5.234.763.494 1.28 1.572 1.28 2.807v2.336c0 .674.561 1.056 1.235.786 4.066-1.55 7.255-5.615 7.255-10.646C23.5 6.188 18.334 1 11.978 1 5.62 1 .5 6.188.5 12.545c0 4.986 3.167 9.12 7.435 10.669.606.225 1.19-.18 1.19-.786V20.63a2.9 2.9 0 0 1-1.078.224c-1.483 0-2.359-.808-2.987-2.313-.247-.607-.517-.966-1.034-1.033-.27-.023-.359-.135-.359-.27 0-.27.45-.471.898-.471.652 0 1.213.404 1.797 1.235.45.651.921.943 1.483.943.561 0 .92-.202 1.437-.719.382-.381.674-.718.944-.943" /></svg>
+    </motion.a>
+    <motion.a {...interaction} className="header-social-link" href="https://x.com/_SENTRIapp" aria-label="SENTRI on X (opens in a new tab)" target="_blank" rel="noopener noreferrer">
+      {/* Official X brand-toolkit logo; currentColor preserves its silhouette. */}
+      <svg viewBox="0 0 1200 1227" width="18" height="18" fill="currentColor" aria-hidden="true" focusable="false"><path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z" /></svg>
+    </motion.a>
+  </div>;
+}
 export function Header() {
   const path = usePathname(); const [open, setOpen] = useState(false);
   const { sessionWallet, snapshot, setWalletOpen } = useSentri();
@@ -14,7 +29,7 @@ export function Header() {
   return <><a className="skip-link" href="#main">Skip to content</a><header className="site-header">
     <Link href="/" className="wordmark" aria-label="SENTRI home">SENTRI<span>_</span></Link>
     <span className="beta-label"><i /> PRIVATE BETA</span>
-    <nav className={open ? 'main-nav is-open' : 'main-nav'} aria-label="Main navigation">{links.map(([href, text]) => <Link key={href} href={href} className={path === href ? 'active' : ''} aria-current={path === href ? 'page' : undefined}>{text}<span>↗</span></Link>)}</nav>
+    <nav className={open ? 'main-nav is-open' : 'main-nav'} aria-label="Main navigation">{links.map(([href, text]) => <Link key={href} href={href} className={path === href ? 'active' : ''} aria-current={path === href ? 'page' : undefined}>{text}<span>↗</span></Link>)}<HeaderSocialLinks /></nav>
     <button className="wallet-button" onClick={() => setWalletOpen(true)}><span className={sessionWallet ? 'live-dot' : 'offline-dot'} /><span>{sessionWallet ? shortAddress(sessionWallet) : snapshot?.address ? 'Sign in' : 'Connect wallet'}</span><Wallet size={15} /></button>
     <button className="menu-button" aria-label={open ? 'Close navigation' : 'Open navigation'} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button>
   </header></>;
