@@ -6,3 +6,25 @@ node_modules/
 .vercel/
 *.tsbuildinfo
 .test-build/
+coverage/
+*.log
+.DS_Store
+Thumbs.db
+
+# Local credentials, wallet material, and database artifacts
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+credentials*.json
+secrets*.json
+wallet*.json
+keystore/
+*.sqlite
+*.sqlite3
+*.db
+dump.rdb
+appendonly.aof*
+exports/
+backups/
